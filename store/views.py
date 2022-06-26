@@ -4,55 +4,25 @@ from django.http import JsonResponse, cookie
 from django.views.decorators.csrf import csrf_exempt
 import json
 import datetime
-from .utils import getCookieData
+from .utils import getCartContext, getCookieData
 
 
 def store(request):
     context = {}
     context['products'] = Product.objects.all()
-    if request.user.is_authenticated:
-        customer = request.user.customer
-        try:
-            order = Order.objects.get(customer=customer, complete=False)
-            context['cart_items'] = order.get_cart_items
-        except Order.DoesNotExist:
-            context['cart_items'] = 0
-    else:
-        try:
-            cart_cookie = json.loads(request.COOKIES['cart'])
-        except KeyError:
-            cart_cookie = {}
-        cart_items = sum([cart_cookie[i]['quantity'] for i in cart_cookie])
-        context['cart_items'] = cart_items
+    cookie_data = getCartContext(request)
+    context['cart_items'] = cookie_data['cart_items']
 
     return render(request, 'store/store.html', context=context)
 
 
 def cart(request):
-    context = {}
-    if request.user.is_authenticated:
-        customer = request.user.customer
-        order, created = Order.objects.get_or_create(customer=customer, complete=False)
-        items = order.orderitem_set.all()
-        context['order'] = order
-        context['items'] = items
-    else:
-        cookie_data = getCookieData(request)
-        context = cookie_data
+    context = getCartContext(request)
     return render(request, 'store/cart.html', context=context)
 
 
 def checkout(request):
-    context = {}
-    if request.user.is_authenticated:
-        customer = request.user.customer
-        order, created = Order.objects.get_or_create(customer=customer, complete=False)
-        items = order.orderitem_set.all()
-        context['order'] = order
-        context['items'] = items
-    else:
-        cookie_data = getCookieData(request)
-        context = cookie_data
+    context = getCartContext(request)
     return render(request, 'store/checkout.html', context=context)
 
 

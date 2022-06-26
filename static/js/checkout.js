@@ -56,6 +56,8 @@ function submitForm() {
     .then(data => {
         console.log(data)
         alert('ordercomplete')
+        cart = {}
+        document.cookie = 'cart='+JSON.stringify(cart)+';domain=;path=/' +';SameSite=Lax'
         window.location.href = homepage_url
     })
 }

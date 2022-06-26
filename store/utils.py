@@ -1,4 +1,4 @@
-from .models import (Product,)
+from .models import (Product, Order)
 import json
 
 def getCookieData(request):
@@ -34,4 +34,19 @@ def getCookieData(request):
     context['order'] = order
     context['items'] = items
     context['cart_items'] = order['get_cart_items']
+    return context
+
+
+def getCartContext(request):
+    context = {}
+    if request.user.is_authenticated:
+        customer = request.user.customer
+        order, created = Order.objects.get_or_create(customer=customer, complete=False)
+        items = order.orderitem_set.all()
+        context['order'] = order
+        context['items'] = items
+        context['cart_items'] = order.get_cart_items
+    else:
+        cookie_data = getCookieData(request)
+        context = cookie_data
     return context

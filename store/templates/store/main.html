@@ -47,11 +47,8 @@
     var cart = JSON.parse(getCookie('cart'))
     if(cart==undefined) {
       cart = {}
-      let exp_time = (new Date(Date.now() + 86400*1000)).toUTCString()
-      document.cookie = 'cart='+JSON.stringify(cart)+';expires='+exp_time+';domain=;path=/' +';SameSite=Lax'
-      console.log('cookie created')
+      document.cookie = 'cart='+JSON.stringify(cart)+';domain=;path=/' +';SameSite=Lax'
     }
-    console.log("Cart:",cart)
     </script>
     <title>Ecom</title>
 </head>
