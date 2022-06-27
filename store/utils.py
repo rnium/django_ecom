@@ -1,4 +1,4 @@
-from .models import (Product, Order)
+from .models import (Product, Order, Customer, OrderItem)
 import json
 
 def getCookieData(request):
@@ -50,3 +50,25 @@ def getCartContext(request):
         cookie_data = getCookieData(request)
         context = cookie_data
     return context
+
+
+def processGuestOrder(request, data):
+    cart_data = getCartContext(request)
+    name = data['form']['name']
+    email = data['form']['email']
+    customer, created = Customer.objects.get_or_create(email=email)
+    customer.name = name
+    customer.save()
+    order = Order.objects.create(customer=customer, complete=False)
+    items_cookie = cart_data['items']
+    items_raw = list()
+    for item in items_cookie:
+        product = Product.objects.get(pk=item['product']['id'])
+        item_obj = OrderItem(
+            order=order,
+            product = product,
+            quantity = item['quantity']
+        )
+        items_raw.append(item_obj)
+    OrderItem.objects.bulk_create(items_raw)
+    return customer, order

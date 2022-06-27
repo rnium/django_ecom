@@ -1,10 +1,10 @@
 from django.shortcuts import render
-from .models import (Order, Product, OrderItem, ShippingAddress)
+from .models import (Customer, Order, Product, OrderItem, ShippingAddress)
 from django.http import JsonResponse, cookie
 from django.views.decorators.csrf import csrf_exempt
 import json
 import datetime
-from .utils import getCartContext, getCookieData
+from .utils import getCartContext, getCookieData, processGuestOrder
 
 
 def store(request):
@@ -57,22 +57,21 @@ def processOrder(request):
     if request.user.is_authenticated:
         customer = request.user.customer
         order = Order.objects.get(customer=customer, complete=False)
-        if order.shipping_able:
-            ShippingAddress.objects.create(
-                customer = customer,
-                order = order,
-                address = data['shipping']['address'],
-                city = data['shipping']['city'],
-                state = data['shipping']['state'],
-                zipcode = data['shipping']['zipcode'],
-            )
-        if order.get_cart_total == float(data['form']['total']):
-            order.transaction_id = trx_id
-            order.complete = True
-            order.save()
     else:
-        response = JsonResponse("user not logged in", safe=False)
-        response.status_code = 403
-        return response
+        customer, order = processGuestOrder(request, data)
+    
+    if order.shipping_able:
+        ShippingAddress.objects.create(
+            customer = customer,
+            order = order,
+            address = data['shipping']['address'],
+            city = data['shipping']['city'],
+            state = data['shipping']['state'],
+            zipcode = data['shipping']['zipcode'],
+        )
+    if str(order.get_cart_total) == data['form']['total']:
+        order.transaction_id = trx_id
+        order.complete = True
+        order.save()
             
     return JsonResponse("order processed!", safe=False)
